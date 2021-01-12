@@ -25,7 +25,7 @@ type AdditionalClaims struct {
 	}
 
 	myClaims := MyClaims{
-		RegisteredClaims: RegisteredClaims{
+		RegisteredClaims: pvx.RegisteredClaims{
 			Issuer:     "paragonie.com",
 			Subject:    "test",
 			Audience:   "pie-hosted.com",
@@ -39,12 +39,12 @@ type AdditionalClaims struct {
 		},
 	}
 
-	key, err := NewSymmetricKey([]byte("YELLOW SUBMARINE, BLACK WIZARDRY")) // must be 32 bytes
+	key, err := pvx.NewSymmetricKey([]byte("YELLOW SUBMARINE, BLACK WIZARDRY")) // must be 32 bytes
 	if err != nil {
 		// handle err
 	}
 
-	pv2 := NewPV2Local()
+	pv2 := pvx.NewPV2Local()
 
 	// this encrypts our claims according to PASETO version 2 local purpose algorithm
 	// this function does not take footer argument because it is optional in PASETO
@@ -80,7 +80,7 @@ During validation multiple errors can occur, and you can check every of them by 
  // For additional layer of safety, 
  // ScanClaims verifies exp, iss and nbf claims automatically under the hood and you can check whether validation error occurred or not
 	if err := decrypted.ScanClaims(&myClaimsScanned); err != nil {
-		var validationErr *ValidationError
+		var validationErr *pvx.ValidationError
 		if errors.As(err, &validationErr) {
 			if validationErr.HasExpiredErr() {
 				// handle 
@@ -95,14 +95,14 @@ During validation multiple errors can occur, and you can check every of them by 
 You can also use extend validation rules implementing ClaimsValidator interface on your custom type
 ```go
 type MyClaims struct {
-	RegisteredClaims
+	pvx.RegisteredClaims
 	AdditionalData string
 	OtherData string 
 } 
 
 func (c *MyClaims) Valid() error {
 
-	validationErr := &ValidationError{}
+	validationErr := &pvx.ValidationError{}
 	
 	// first, check the validity of registered claims
 	if err := c.RegisteredClaims.Valid(); err != nil {
@@ -113,19 +113,19 @@ func (c *MyClaims) Valid() error {
 	
 	if c.Audience != "mysite.com" {
 		validationErr.Inner = fmt.Errorf("aud - audience does not match: %w", validationErr.Inner)
-		validationErr.Errors |= ValidationErrorAudience
+		validationErr.Errors |= pvx.ValidationErrorAudience
 	}
 	
 	// for general errors, set ValidationErrorClaimsInvalid
 	
 	if c.AdditionalData != "myVal" {
 		validationErr.Inner = fmt.Errorf("additionalData - other data is empty: %w", validationErr.Inner)
-		validationErr.Errors |= ValidationErrorClaimsInvalid
+		validationErr.Errors |= pvx.ValidationErrorClaimsInvalid
 	}
 	
 	if c.OtherData == "" {
 		validationErr.Inner = fmt.Errorf("otherData - other data is empty: %w", validationErr.Inner)
-		validationErr.Errors |= ValidationErrorClaimsInvalid
+		validationErr.Errors |= pvx.ValidationErrorClaimsInvalid
 	}
 	
 	if validationErr.Errors != 0 {
