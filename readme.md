@@ -20,7 +20,7 @@ type AdditionalClaims struct {
 	}
 
 	type MyClaims struct {
-		RegisteredClaims
+		pvx.RegisteredClaims
 		AdditionalClaims
 	}
 

@@ -25,7 +25,7 @@ type AdditionalClaims struct {
 	}
 
 	myClaims := MyClaims{
-		RegisteredClaims: RegisteredClaims{
+		RegisteredClaims: pvx.RegisteredClaims{
 			Issuer:     "paragonie.com",
 			Subject:    "test",
 			Audience:   "pie-hosted.com",
