@@ -22,6 +22,7 @@ const (
 	headerV2Local      = "v2.local."
 )
 
+// ErrMalformedToken indicates that obtained token was not properly formed
 var ErrMalformedToken = errors.New("token is malformed")
 
 // SymmetricKey is an abstraction for real key aimed at setting up strong typing and invariant.
