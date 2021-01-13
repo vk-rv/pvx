@@ -244,8 +244,8 @@ func TestEncryptDecrypt(t *testing.T) {
 		t.Errorf("encryption problem: %v", err)
 	}
 
-	decrypted, err := pv2.Decrypt(token, k)
-	if err != nil {
+	decrypted := pv2.Decrypt(token, k)
+	if err := decrypted.Err(); err != nil {
 		t.Errorf("decryption problem: %v", err)
 	}
 
@@ -277,8 +277,8 @@ func TestEncryptDecrypt(t *testing.T) {
 
 	parsedFooter := Footer{}
 
-	decrypted, err = pv2.Decrypt(token, k)
-	if err != nil {
+	decrypted = pv2.Decrypt(token, k)
+	if err := decrypted.Err(); err != nil {
 		t.Errorf("problem while decryption: %v", err)
 	}
 
@@ -314,8 +314,7 @@ func TestEncryptDecrypt(t *testing.T) {
 		t.Errorf("problem while trying to make a new key")
 	}
 
-	_, err = pv2.Decrypt(token, badKey)
-	if err == nil {
+	if err = pv2.Decrypt(token, badKey).Err(); err == nil {
 		t.Errorf("error can't be nil because key is different")
 	}
 

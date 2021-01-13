@@ -197,29 +197,37 @@ func preAuthenticationEncoding(pieces ...[]byte) []byte {
 	return output.Bytes()
 }
 
-// DecryptedToken is a structure which encapsulates decrypted raw claims and optionally raw footer.
-type DecryptedToken struct {
+// Token is a structure which encapsulates raw claims and optionally raw footer or error which occurred in case of decryption.
+type Token struct {
 	claims, footer []byte
+	err            error // deferred error for easy chaining
 }
 
 // HasFooter reports whether footer was not empty after token decryption.
-func (dt *DecryptedToken) HasFooter() bool { return len(dt.footer) > 0 }
+func (t *Token) HasFooter() bool { return len(t.footer) > 0 }
+
+// Err is a getter which helps to separate decryption error from scanning or validation problem
+func (t *Token) Err() error { return t.err }
 
 // Scan deserialize claims to claims object and footer to footer object
 // Performs claims validation (or user-provided in case of wrapping) under the hood for safer defaults.
-func (dt *DecryptedToken) Scan(claims ClaimsValidator, footer interface{}) error {
-	return dt.scan(claims, footer)
+func (t *Token) Scan(claims ClaimsValidator, footer interface{}) error {
+	return t.scan(claims, footer)
 }
 
 // ScanClaims deserialize claims to object
 // Performs claims validation (or user-provided in case of wrapping) under the hood for safer defaults.
-func (dt *DecryptedToken) ScanClaims(claims ClaimsValidator) error {
-	return dt.scan(claims, nil)
+func (t *Token) ScanClaims(claims ClaimsValidator) error {
+	return t.scan(claims, nil)
 }
 
-func (dt *DecryptedToken) scan(claims ClaimsValidator, footer interface{}) error {
+func (t *Token) scan(claims ClaimsValidator, footer interface{}) error {
 
-	dec := json.NewDecoder(bytes.NewBuffer(dt.claims))
+	if t.err != nil {
+		return t.err
+	}
+
+	dec := json.NewDecoder(bytes.NewBuffer(t.claims))
 	if err := dec.Decode(claims); err != nil {
 		return fmt.Errorf("can't perform json decode for provided claims: %w", err)
 	}
@@ -229,10 +237,10 @@ func (dt *DecryptedToken) scan(claims ClaimsValidator, footer interface{}) error
 	}
 
 	if footer != nil {
-		if len(dt.footer) == 0 {
+		if len(t.footer) == 0 {
 			return fmt.Errorf("can't decode footer: destination for footer was provided, however there is no footer in token")
 		}
-		if err := decodeFooter(dt.footer, footer); err != nil {
+		if err := decodeFooter(t.footer, footer); err != nil {
 			return err
 		}
 	}
@@ -241,20 +249,29 @@ func (dt *DecryptedToken) scan(claims ClaimsValidator, footer interface{}) error
 
 }
 
-// Decrypt implements PASETO v2.Decrypt returning DecryptedToken struct ready for subsequent scan in case of success.
-func (pv2 *ProtoV2Local) Decrypt(token string, key SymmetricKey) (*DecryptedToken, error) {
+// Decrypt implements PASETO v2.Decrypt returning Token struct ready for subsequent scan in case of success.
+func (pv2 *ProtoV2Local) Decrypt(token string, key SymmetricKey) *Token {
+
+	plaintextClaims, footer, err := pv2.decrypt(token, key)
+
+	return &Token{claims: plaintextClaims, footer: footer, err: err}
+
+}
+
+// decrypt implements PASETO v2.Decrypt returning claims and footer in plaintext
+func (pv2 *ProtoV2Local) decrypt(token string, key SymmetricKey) ([]byte, []byte, error) {
 
 	if !strings.HasPrefix(token, headerV2Local) {
-		return nil, fmt.Errorf("decrypted token does not have header v2 local prefix: %w", ErrMalformedToken)
+		return nil, nil, fmt.Errorf("decrypted token does not have header v2 local prefix: %w", ErrMalformedToken)
 	}
 
 	bodyBytes, footerBytes, err := decodeB64ToRawBinary(token, len(headerV2Local))
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode token: %w", err)
+		return nil, nil, fmt.Errorf("failed to decode token: %w", err)
 	}
 
 	if len(bodyBytes) < nonceLen {
-		return nil, fmt.Errorf("incorrect token size: %w", ErrMalformedToken)
+		return nil, nil, fmt.Errorf("incorrect token size: %w", ErrMalformedToken)
 	}
 
 	nonce := bodyBytes[:nonceLen]
@@ -262,17 +279,17 @@ func (pv2 *ProtoV2Local) Decrypt(token string, key SymmetricKey) (*DecryptedToke
 
 	aead, err := chacha20poly1305.NewX(key.key)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create chachapoly cipher: %w", err)
+		return nil, nil, fmt.Errorf("failed to create chachapoly cipher: %w", err)
 	}
 
 	additionalData := preAuthenticationEncoding([]byte(headerV2Local), nonce, footerBytes)
 
 	plainTextClaims, err := aead.Open(cipherText[:0], nonce, cipherText, additionalData)
 	if err != nil {
-		return nil, fmt.Errorf("problem while trying to decrypt token: %w", err)
+		return nil, nil, fmt.Errorf("problem while trying to decrypt token: %w", err)
 	}
 
-	return &DecryptedToken{claims: plainTextClaims, footer: footerBytes}, nil
+	return plainTextClaims, footerBytes, nil
 }
 
 func decodeFooter(data []byte, i interface{}) error {
