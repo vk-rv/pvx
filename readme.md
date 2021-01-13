@@ -58,9 +58,9 @@ fmt.Println(token)
 // v2.local.L688dlSnD4EAjIWOhdnE0CRaNWBgDTdB0X0zPbESj0RS8eiaDkrD-lS2xaNMskbOK0rQyTtZCzkHEZB6sj7sGyjLUtI2TyCUFZim8LLK6TIRRN-yzgc6MQYYWtHPCrHgMnhX50yqhpvH0zA2zgwsLOfYpUrT_YrIaOKZRNg7PC7wH9sSOp7Prz2lM8-Xq2Jdc6bO6i_JBROh0l_jhnAoeQZn6OGjnWGKW5BDmBPmxNL80s87YLNOLYU-2IG7Y0FflKeYOqwIWSlEJaCZbA63D39K7rDppec6IXC_uYeFWrCaqGidqImhSVrTcscxI62aHHj5ohxtk_I6lrZHQQ
 // where v2 designates PASETO version, local designates purpose and the last part is base64-encoded ciphertext among with nonce, so that nobody can't decrypt it without your key
 
-decrypted, err := pv2.Decrypt(token, key)
-if err != nil { 
-    // decryption unsuccessful 
+decrypted := pv2.Decrypt(token, key)
+if err = decrypted.Err(); err != nil {
+    // decryption unsuccessful
 }
 
 // here we have decrypted json claims
@@ -69,6 +69,12 @@ if err != nil {
 myClaimsScanned := MyClaims{}
 if err := decrypted.ScanClaims(&myClaimsScanned); err != nil {
     // handle err
+}
+
+// or you can chain API calls
+// in this case decryption error will be deferred until Scan
+if err := pv2.Decrypt(token, key).ScanClaims(&myClaimsScanned); err != nil {
+    // handle err 	
 }
 ```
 
