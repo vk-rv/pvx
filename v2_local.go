@@ -227,9 +227,8 @@ func (t *Token) scan(claims ClaimsValidator, footer interface{}) error {
 		return t.err
 	}
 
-	dec := json.NewDecoder(bytes.NewBuffer(t.claims))
-	if err := dec.Decode(claims); err != nil {
-		return fmt.Errorf("can't perform json decode for provided claims: %w", err)
+	if err := json.Unmarshal(t.claims, claims); err != nil {
+		return fmt.Errorf("can't perform json unmarshal for provided claims: %w", err)
 	}
 
 	if err := claims.Valid(); err != nil {
