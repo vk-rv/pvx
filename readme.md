@@ -31,8 +31,8 @@ myClaims := MyClaims{
         Subject:    "test",
         Audience:   "pie-hosted.com",
         TokenID:    "87IFSGFgPNtQNNuw0AtuLttP",
-        IssuedAt:   TimePtr(time.Now()),
-        Expiration: TimePtr(time.Now().Add(time.Hour * 1)),
+        IssuedAt:   pvx.TimePtr(time.Now()),
+        Expiration: pvx.TimePtr(time.Now().Add(time.Hour * 1)),
 		}, 
     AdditionalClaims: AdditionalClaims{
         Number: 14, 
