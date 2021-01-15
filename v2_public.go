@@ -25,7 +25,7 @@ func NewPV2Public() *ProtoV2Public { return &ProtoV2Public{} }
 var PV2Public = NewPV2Public()
 
 // Sign signs claims with private key, authenticating its content but still preserving in plaintext.
-func (pv2 *ProtoV2Public) Sign(privateKey ed25519.PrivateKey, claims ClaimsValidator, footer interface{}) (string, error) {
+func (pv2 *ProtoV2Public) Sign(privateKey ed25519.PrivateKey, claims Claims, footer interface{}) (string, error) {
 	payload, optionalFooter, err := encode(claims, footer)
 	if err != nil {
 		return "", err
@@ -35,7 +35,7 @@ func (pv2 *ProtoV2Public) Sign(privateKey ed25519.PrivateKey, claims ClaimsValid
 
 // SignFooterNil signs claims with private key, authenticating its content but still preserving in plaintext.
 // Does not accept footer, internally calls Sign method with footer equal to nil.
-func (pv2 *ProtoV2Public) SignFooterNil(privateKey ed25519.PrivateKey, claims ClaimsValidator) (string, error) {
+func (pv2 *ProtoV2Public) SignFooterNil(privateKey ed25519.PrivateKey, claims Claims) (string, error) {
 	return pv2.Sign(privateKey, claims, nil)
 }
 

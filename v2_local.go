@@ -50,7 +50,7 @@ func NewPV2Local() *ProtoV2Local {
 
 // Encrypt encrypts claims with provided symmetric key and authenticates footer,
 // protecting it from tampering but preserving it in base64 encoded plaintext.
-func (pv2 *ProtoV2Local) Encrypt(key SymmetricKey, claims ClaimsValidator, footer interface{}) (string, error) {
+func (pv2 *ProtoV2Local) Encrypt(key SymmetricKey, claims Claims, footer interface{}) (string, error) {
 	payload, optionalFooter, err := encode(claims, footer)
 	if err != nil {
 		return "", err
@@ -60,7 +60,7 @@ func (pv2 *ProtoV2Local) Encrypt(key SymmetricKey, claims ClaimsValidator, foote
 
 // EncryptFooterNil is a sugar function which eliminates optional footer from function parameter list
 // Equivalent to Encrypt (key, claims, nil).
-func (pv2 *ProtoV2Local) EncryptFooterNil(key SymmetricKey, claims ClaimsValidator) (string, error) {
+func (pv2 *ProtoV2Local) EncryptFooterNil(key SymmetricKey, claims Claims) (string, error) {
 	return pv2.Encrypt(key, claims, nil)
 }
 

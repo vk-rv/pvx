@@ -17,8 +17,8 @@ const (
 	ValidationErrorClaimsInvalid // generic validation error
 )
 
-// ClaimsValidator provides means to validate claims.
-type ClaimsValidator interface {
+// Claims is everything that can be checked for validity.
+type Claims interface {
 	Valid() error
 }
 

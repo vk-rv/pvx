@@ -10,7 +10,7 @@ import (
 )
 
 // encode performs json.Marshalling for claims and serialize footer interface (not necessary JSON) to byte slice if it is present.
-func encode(claims ClaimsValidator, footerObj interface{}) ([]byte, []byte, error) {
+func encode(claims Claims, footerObj interface{}) ([]byte, []byte, error) {
 
 	var (
 		payload []byte
