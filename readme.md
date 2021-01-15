@@ -1,8 +1,7 @@
 ## PVX
 
 PVX is a PASETO implementation for Go programming language.
-Currently, API is not stabilized and supports only local purpose of version 2 which
-encrypts claims and authenticates footer (preserving it in base64 encoded plaintext), but the library is under active development, does not have unnecessary dependencies and has greater than 91% of test coverage.
+Currently, API is not stabilized and supports only version 2 but the library is under active development, does not have unnecessary dependencies and has greater than 91% of test coverage.
 Status of this library is experimental. You can use https://github.com/o1egl/paseto as more compatible alternative. 
 
 # Go version
@@ -14,6 +13,8 @@ go get -u github.com/vk-rv/pvx
 ```
 
 # General usage
+
+## Shared-Key Encryption
 ```go
 type AdditionalClaims struct {
     Number int    `json:"num"`
@@ -40,15 +41,12 @@ myClaims := MyClaims{
     },
 }
 
-key, err := pvx.NewSymmetricKey([]byte("YELLOW SUBMARINE, BLACK WIZARDRY")) // must be 32 bytes
-if err != nil { 
-    // handle err 
-}
+symmetricKey := []byte("YELLOW SUBMARINE, BLACK WIZARDRY") // must be 32 bytes
 
 pv2 := pvx.NewPV2Local()
 // this encrypts our claims according to PASETO version 2 local purpose algorithm
 // this function does not take footer argument because it is optional in PASETO
-token, err := pv2.EncryptFooterNil(key, &myClaims)
+token, err := pv2.EncryptFooterNil(symmetricKey, &myClaims)
 if err != nil { 
     // handle err
 }
@@ -58,7 +56,7 @@ fmt.Println(token)
 // v2.local.L688dlSnD4EAjIWOhdnE0CRaNWBgDTdB0X0zPbESj0RS8eiaDkrD-lS2xaNMskbOK0rQyTtZCzkHEZB6sj7sGyjLUtI2TyCUFZim8LLK6TIRRN-yzgc6MQYYWtHPCrHgMnhX50yqhpvH0zA2zgwsLOfYpUrT_YrIaOKZRNg7PC7wH9sSOp7Prz2lM8-Xq2Jdc6bO6i_JBROh0l_jhnAoeQZn6OGjnWGKW5BDmBPmxNL80s87YLNOLYU-2IG7Y0FflKeYOqwIWSlEJaCZbA63D39K7rDppec6IXC_uYeFWrCaqGidqImhSVrTcscxI62aHHj5ohxtk_I6lrZHQQ
 // where v2 designates PASETO version, local designates purpose and the last part is base64-encoded ciphertext among with nonce, so that nobody can't decrypt it without your key
 
-decrypted := pv2.Decrypt(token, key)
+decrypted := pv2.Decrypt(token, symmetricKey)
 if err = decrypted.Err(); err != nil {
     // decryption unsuccessful
 }
@@ -73,9 +71,22 @@ if err := decrypted.ScanClaims(&myClaimsScanned); err != nil {
 
 // or you can chain API calls
 // in this case decryption error will be deferred until Scan
-if err := pv2.Decrypt(token, key).ScanClaims(&myClaimsScanned); err != nil {
+if err := pv2.Decrypt(token, symmetricKey).ScanClaims(&myClaimsScanned); err != nil {
     // handle err 	
 }
+```
+
+## Public-Key Authentication
+```go
+publicKey, privateKey, _ := ed25519.GenerateKey(nil)
+pv2 := NewPV2Public()
+token, err := pv2.SignFooterNil(privateKey, &myClaims)
+if err != nil {//...}
+
+var claims MyClaims 
+if err := pv2.Verify(token, publicKey).ScanClaims(&claims); err != nil {//...}
+
+
 ```
 
 # Claims validation 
