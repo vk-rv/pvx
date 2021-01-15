@@ -1,11 +1,7 @@
 package pvx
 
 import (
-	"bytes"
 	"crypto/rand"
-	"encoding/base64"
-	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -68,63 +64,6 @@ func (pv2 *ProtoV2Local) EncryptFooterNil(key SymmetricKey, claims ClaimsValidat
 	return pv2.Encrypt(key, claims, nil)
 }
 
-// encode performs json.Marshalling for claims and serialize footer interface (not necessary JSON) to byte slice if it is present.
-func encode(claims ClaimsValidator, footerObj interface{}) ([]byte, []byte, error) {
-
-	var (
-		payload []byte
-		err     error
-	)
-
-	if claims != nil {
-		payload, err = json.Marshal(claims)
-	} else {
-		payload, err = json.Marshal(struct{}{})
-	}
-	if err != nil {
-		return nil, nil, fmt.Errorf("json.Marshal problem with claims: %w", err)
-	}
-
-	footer := []byte("")
-	if footerObj != nil {
-		footer, err = encodeFooter(footerObj)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	return payload, footer, nil
-}
-
-func encodeFooter(i interface{}) ([]byte, error) {
-
-	switch v := i.(type) {
-
-	case nil:
-		return []byte(""), nil
-
-	case []byte:
-		return v, nil
-
-	case *[]byte:
-		if v != nil {
-			return *v, nil
-		}
-
-	case string:
-		return []byte(v), nil
-
-	case *string:
-		if v != nil {
-			return []byte(*v), nil
-		}
-
-	}
-
-	return json.Marshal(i)
-
-}
-
 // encrypt is a step-by-step algorithm implemented according to RFC.
 func (pv2 *ProtoV2Local) encrypt(key SymmetricKey, message []byte, optionalFooter []byte) (string, error) {
 
@@ -183,71 +122,6 @@ func (pv2 *ProtoV2Local) encrypt(key SymmetricKey, message []byte, optionalFoote
 	return token, nil
 }
 
-// preAuthenticationEncoding is PAE(), find 2.2.1. PAE Definition of RFC
-func preAuthenticationEncoding(pieces ...[]byte) []byte {
-
-	count := len(pieces)
-	output := &bytes.Buffer{}
-	_ = binary.Write(output, binary.LittleEndian, uint64(count))
-	for i := range pieces {
-		_ = binary.Write(output, binary.LittleEndian, uint64(len(pieces[i])))
-		output.Write(pieces[i])
-	}
-
-	return output.Bytes()
-}
-
-// Token is a structure which encapsulates raw claims and optionally raw footer or error which occurred in case of decryption.
-type Token struct {
-	claims, footer []byte
-	err            error // deferred error for easy chaining
-}
-
-// HasFooter reports whether footer was not empty after token decryption.
-func (t *Token) HasFooter() bool { return len(t.footer) > 0 }
-
-// Err is a getter which helps to separate decryption error from scanning or validation problem
-func (t *Token) Err() error { return t.err }
-
-// Scan deserialize claims to claims object and footer to footer object
-// Performs claims validation (or user-provided in case of wrapping) under the hood for safer defaults.
-func (t *Token) Scan(claims ClaimsValidator, footer interface{}) error {
-	return t.scan(claims, footer)
-}
-
-// ScanClaims deserialize claims to object
-// Performs claims validation (or user-provided in case of wrapping) under the hood for safer defaults.
-func (t *Token) ScanClaims(claims ClaimsValidator) error {
-	return t.scan(claims, nil)
-}
-
-func (t *Token) scan(claims ClaimsValidator, footer interface{}) error {
-
-	if t.err != nil {
-		return t.err
-	}
-
-	if err := json.Unmarshal(t.claims, claims); err != nil {
-		return fmt.Errorf("can't perform json unmarshal for provided claims: %w", err)
-	}
-
-	if err := claims.Valid(); err != nil {
-		return err
-	}
-
-	if footer != nil {
-		if len(t.footer) == 0 {
-			return fmt.Errorf("can't decode footer: destination for footer was provided, however there is no footer in token")
-		}
-		if err := decodeFooter(t.footer, footer); err != nil {
-			return err
-		}
-	}
-
-	return nil
-
-}
-
 // Decrypt implements PASETO v2.Decrypt returning Token struct ready for subsequent scan in case of success.
 func (pv2 *ProtoV2Local) Decrypt(token string, key SymmetricKey) *Token {
 
@@ -289,59 +163,4 @@ func (pv2 *ProtoV2Local) decrypt(token string, key SymmetricKey) ([]byte, []byte
 	}
 
 	return plainTextClaims, footerBytes, nil
-}
-
-func decodeFooter(data []byte, i interface{}) error {
-	switch f := i.(type) {
-	case *string:
-		*f = string(data)
-	case *[]byte:
-		*f = data
-	default:
-		if err := json.Unmarshal(data, i); err != nil {
-			return fmt.Errorf("problems while trying to unmarshal footer in JSON: %w", err)
-		}
-	}
-	return nil
-}
-
-func decodeB64ToRawBinary(token string, headerLen int) (message, footer []byte, err error) {
-
-	var (
-		base64EncodedPayload []byte
-		base64EncodedFooter  []byte
-	)
-
-	parts := strings.Split(token[headerLen:], ".")
-	switch len(parts) {
-	case 1:
-		base64EncodedPayload = []byte(parts[0])
-	case 2:
-		base64EncodedPayload, base64EncodedFooter = []byte(parts[0]), []byte(parts[1])
-	default:
-		return nil, nil, ErrMalformedToken
-	}
-
-	base64RawURL := base64.RawURLEncoding
-
-	message = make([]byte, base64RawURL.DecodedLen(len(base64EncodedPayload)))
-	if _, err := base64RawURL.Decode(message, base64EncodedPayload); err != nil {
-		return nil, nil, fmt.Errorf("failed to decode message claims from base64: %w", err)
-	}
-
-	if len(base64EncodedFooter) > 0 {
-		footer = make([]byte, base64RawURL.DecodedLen(len(base64EncodedFooter)))
-		if _, err := base64RawURL.Decode(footer, base64EncodedFooter); err != nil {
-			return nil, nil, fmt.Errorf("failed to decode footer from base64: %w", err)
-		}
-	}
-
-	return message, footer, nil
-}
-
-func b64(src []byte) string {
-	b64RawURL := base64.RawURLEncoding
-	dst := make([]byte, b64RawURL.EncodedLen(len(src)))
-	b64RawURL.Encode(dst, src)
-	return string(dst)
 }
