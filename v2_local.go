@@ -21,19 +21,8 @@ const (
 // ErrMalformedToken indicates that obtained token was not properly formed
 var ErrMalformedToken = errors.New("token is malformed")
 
-// SymmetricKey is an abstraction for real key aimed at setting up strong typing and invariant.
-type SymmetricKey struct {
-	key []byte
-}
-
-// NewSymmetricKey is a constructor-like function which creates encryption key suitable for Encrypt() / Decrypt() functions.
-// Returns error in case when provided byte slice key length does not match to 32 bytes.
-func NewSymmetricKey(key []byte) (SymmetricKey, error) {
-	if l := len(key); l != chacha20poly1305.KeySize {
-		return SymmetricKey{}, fmt.Errorf("key length should be %d bytes, provided %d bytes slice", chacha20poly1305.KeySize, l)
-	}
-	return SymmetricKey{key: key}, nil
-}
+// SymmetricKey is used in encryption and decryption routines.
+type SymmetricKey []byte
 
 // PV2Local can be used as a global reference for protocol version 2 with local purpose.
 var PV2Local = NewPV2Local()
@@ -94,7 +83,7 @@ func (pv2 *ProtoV2Local) encrypt(key SymmetricKey, message []byte, optionalFoote
 
 	additionalData := preAuthenticationEncoding([]byte(header), nonce, optionalFooter)
 
-	aead, err := chacha20poly1305.NewX(key.key)
+	aead, err := chacha20poly1305.NewX(key)
 	if err != nil {
 		return "", fmt.Errorf("failed to create chacha20poly1305 aead: %w", err)
 	}
@@ -150,7 +139,7 @@ func (pv2 *ProtoV2Local) decrypt(token string, key SymmetricKey) ([]byte, []byte
 	nonce := bodyBytes[:nonceLen]
 	cipherText := bodyBytes[nonceLen:]
 
-	aead, err := chacha20poly1305.NewX(key.key)
+	aead, err := chacha20poly1305.NewX(key)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create chachapoly cipher: %w", err)
 	}

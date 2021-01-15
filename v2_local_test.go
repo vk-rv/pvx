@@ -13,21 +13,9 @@ import (
 func TestEncrypt(t *testing.T) {
 
 	setupKeys := func() (nullKey, fullKey, symmetricKey SymmetricKey, err error) {
-		nk := bytes.Repeat([]byte{0}, 32)
-		nullKey, err = NewSymmetricKey(nk)
-		if err != nil {
-			return SymmetricKey{}, SymmetricKey{}, SymmetricKey{}, err
-		}
-		fk := bytes.Repeat([]byte{0xff}, 32)
-		fullKey, err = NewSymmetricKey(fk)
-		if err != nil {
-			return SymmetricKey{}, SymmetricKey{}, SymmetricKey{}, err
-		}
-		sk, err := hex.DecodeString("707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f")
-		if err != nil {
-			return SymmetricKey{}, SymmetricKey{}, SymmetricKey{}, err
-		}
-		symmetricKey, err = NewSymmetricKey(sk)
+		nullKey = bytes.Repeat([]byte{0}, 32)
+		fullKey = bytes.Repeat([]byte{0xff}, 32)
+		symmetricKey, err = hex.DecodeString("707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f")
 		if err != nil {
 			return SymmetricKey{}, SymmetricKey{}, SymmetricKey{}, err
 		}
@@ -216,13 +204,9 @@ func TestEncrypt(t *testing.T) {
 
 func TestEncryptDecrypt(t *testing.T) {
 	pv2 := NewPV2Local()
-	kb, err := hex.DecodeString("707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f")
+	k, err := hex.DecodeString("707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f")
 	if err != nil {
 		t.Errorf("can't hex decode key")
-	}
-	k, err := NewSymmetricKey(kb)
-	if err != nil {
-		t.Errorf("can't create key: %v", err)
 	}
 
 	type AdditionalInformation struct {
@@ -308,12 +292,7 @@ func TestEncryptDecrypt(t *testing.T) {
 		t.Errorf("problem while encryption")
 	}
 
-	bk := bytes.Repeat([]byte{2}, 32)
-	badKey, err := NewSymmetricKey(bk)
-	if err != nil {
-		t.Errorf("problem while trying to make a new key")
-	}
-
+	badKey := bytes.Repeat([]byte{2}, 32)
 	if err = pv2.Decrypt(token, badKey).Err(); err == nil {
 		t.Errorf("error can't be nil because key is different")
 	}
@@ -365,17 +344,6 @@ func TestPreAuthenticationEncoding(t *testing.T) {
 				t.Errorf("result from pae doesn't equal to expected: want %s, given %s", tt.want, given)
 			}
 		})
-	}
-}
-
-func TestWrongSizeEncryptionKey(t *testing.T) {
-	_, err := NewSymmetricKey(bytes.Repeat([]byte{0xff}, 32))
-	if err != nil {
-		t.Errorf("problem occurred: %v", err)
-	}
-	_, err = NewSymmetricKey(bytes.Repeat([]byte{0xff}, 31))
-	if err == nil {
-		t.Errorf("there must be error because of wrong key len")
 	}
 }
 
