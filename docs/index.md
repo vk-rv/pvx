@@ -108,7 +108,7 @@ During validation multiple errors can occur, and you can check every of them by 
 }
 ```
 
-You can also use extend validation rules implementing ClaimsValidator interface on your custom type
+You can also use extend validation rules implementing Claims interface on your custom type
 ```go
 type MyClaims struct {
 	pvx.RegisteredClaims
