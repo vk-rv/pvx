@@ -154,5 +154,5 @@ func (c *MyClaims) Valid() error {
 
 ```
 
-To disable validation of registered claims you should implement ClaimsValidator explicitly returning nil in your checks.
+To disable validation of registered claims you should implement Claims interface explicitly returning nil in your checks.
 This is from design. 
