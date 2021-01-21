@@ -4,6 +4,8 @@ PVX is a PASETO implementation for Go programming language.
 Currently, API is not stabilized and supports only version 2 but the library is under active development, does not have unnecessary dependencies and has greater than 91% of test coverage.
 Status of this library is experimental. You can use https://github.com/o1egl/paseto as more compatible alternative. 
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/vk-rv/pvx.svg)](https://pkg.go.dev/github.com/vk-rv/pvx)
+
 # Go version
 A minimal version is 1.14
 
