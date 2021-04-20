@@ -9,7 +9,7 @@ You can use https://github.com/o1egl/paseto if you are looking for version 1.
 Why this library exists:
 https://paragonie.com/blog/2017/03/jwt-json-web-tokens-is-bad-standard-that-everyone-should-avoid 
 
-Check "Intended Use-Cases" before using PASETO 
+Check "Intended Use-Cases for PASETO" before using this library. 
 https://paseto.io/rfc/draft-00 
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/vk-rv/pvx.svg)](https://pkg.go.dev/github.com/vk-rv/pvx)
