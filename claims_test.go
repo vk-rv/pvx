@@ -16,7 +16,8 @@ func TestRegisteredClaimsValidation(t *testing.T) {
 	}
 
 	// expiration problem
-	rc = &RegisteredClaims{Expiration: TimePtr(time.Now())}
+	now := time.Now()
+	rc = &RegisteredClaims{Expiration: TimePtr(now.AddDate(0, -1, 0))}
 	if err := rc.Valid(); err == nil {
 		t.Errorf("claims should expire")
 	} else {
@@ -27,7 +28,6 @@ func TestRegisteredClaimsValidation(t *testing.T) {
 		if !validationErr.HasExpiredErr() {
 			t.Errorf("field should have expired error")
 		}
-		t.Log(err)
 	}
 
 	// NotBeforeProblem
@@ -58,10 +58,11 @@ func TestRegisteredClaimsValidation(t *testing.T) {
 	}
 
 	// Multiple problems at once
+	now = time.Now()
 	rc = &RegisteredClaims{
-		IssuedAt:   TimePtr(time.Now().Add(time.Minute * 60)),
-		NotBefore:  TimePtr(time.Now().Add(time.Minute * 60)),
-		Expiration: TimePtr(time.Now())}
+		IssuedAt:   TimePtr(now.Add(time.Minute * 60)),
+		NotBefore:  TimePtr(now.Add(time.Minute * 60)),
+		Expiration: TimePtr(now.AddDate(0, 0, -1))}
 	if err := rc.Valid(); err == nil {
 		t.Errorf("claims must be invalid")
 	} else {
@@ -69,9 +70,16 @@ func TestRegisteredClaimsValidation(t *testing.T) {
 		if !errors.As(err, &validationErr) {
 			t.Errorf("error is not a type of validation error")
 		}
-		passed := validationErr.HasIssuedAtErr() && validationErr.HasNotBeforeErr() && validationErr.HasExpiredErr() &&
-			!validationErr.HasAudienceErr() && !validationErr.HasGenericValidationErr() && !validationErr.HasIssuerErr() &&
-			!validationErr.HasKeyIDErr() && !validationErr.HasSubjectErr() && !validationErr.HasKeyIDErr() && !validationErr.HasTokenIDErr()
+		passed := validationErr.HasIssuedAtErr() &&
+			validationErr.HasNotBeforeErr() &&
+			validationErr.HasExpiredErr() &&
+			!validationErr.HasAudienceErr() &&
+			!validationErr.HasGenericValidationErr() &&
+			!validationErr.HasIssuerErr() &&
+			!validationErr.HasKeyIDErr() &&
+			!validationErr.HasSubjectErr() &&
+			!validationErr.HasKeyIDErr() &&
+			!validationErr.HasTokenIDErr()
 		if !passed {
 			t.Errorf("claims should have simultaneously 3 errors and don't have others")
 		}
