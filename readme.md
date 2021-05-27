@@ -7,7 +7,8 @@ Status of this library is experimental.
 You can use https://github.com/o1egl/paseto if you are looking for version 1. 
 
 Why this library exists:
-https://paragonie.com/blog/2017/03/jwt-json-web-tokens-is-bad-standard-that-everyone-should-avoid 
+1. https://paragonie.com/blog/2017/03/jwt-json-web-tokens-is-bad-standard-that-everyone-should-avoid 
+2. https://www.howmanydayssinceajwtalgnonevuln.com
 
 Check "Intended Use-Cases for PASETO" before using this library. 
 https://paseto.io/rfc/draft-00 
