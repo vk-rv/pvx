@@ -1,8 +1,7 @@
 ## PVX
 
-PVX is a PASETO implementation for Go programming language.
-Currently, API is not stabilized and supports only version 2, but the library is under active development, does not have unnecessary dependencies and has greater than 91% of test coverage.
-Status of this library is experimental. 
+PVX is a (work in progress) PASETO implementation for Go programming language.
+Currently, library supports version 2 and version 3 (local), but it is under active development, does not have unnecessary dependencies and has greater than 91% of test coverage.
 
 You can use https://github.com/o1egl/paseto if you are looking for version 1. 
 
@@ -104,6 +103,39 @@ if err := pv2.Verify(token, publicKey).ScanClaims(&claims); err != nil {//...}
 
 ```
 
+# Version 3 (local)
+```go
+k, err := hex.DecodeString("707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f")
+if err != nil {
+    return err 
+}
+symK := NewSymmetricKey(k, pvx.Version3)
+pv3 := NewPV3Local()
+token, err := pv3.Encrypt(symK, claims, pvx.WithAssert([]byte("test")))
+if err != nil {
+	return err
+}
+cc := MyClaims{}
+err = pv3.
+    Decrypt(token, symK, pvx.WithAssert([]byte("test"))).
+    ScanClaims(&cc)
+if err != nil {
+    return err 
+}
+// work with cc claims ...
+
+// or without assert
+token, err := pv3.Encrypt(symK, claims)
+if err != nil {
+	return err
+}
+err = pv3.Decrypt(token, symK).ScanClaims(&cc)
+
+// more info about implicit asserts is here
+// https://github.com/paseto-standard/paseto-spec/blob/master/docs/Rationale-V3-V4.md#implicit-assertions-feature
+
+```
+
 # Claims validation 
 PVX adds extra layer of security by adding validation of time-based registered claims during a scan by default.
 During validation multiple errors can occur, and you can check every of them by calling sugar routines on special type.
@@ -151,3 +183,7 @@ func (c *MyClaims) Valid() error {
 
 To disable validation of registered claims you should implement Claims interface explicitly returning nil in your checks.
 This is from design. 
+
+# PASETO V3 and V4
+A library has a work in progress status because currently is the next iteration of the PASETO specification.
+https://paragonie.com/blog/2021/08/paseto-is-even-more-secure-alternative-jose-standards-jwt-etc
