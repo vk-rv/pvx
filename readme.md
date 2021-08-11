@@ -104,6 +104,7 @@ if err := pv2.Verify(token, publicKey).ScanClaims(&claims); err != nil {//...}
 ```
 
 # Version 3 (local)
+If you need NIST-approved algorithms
 ```go
 k, err := hex.DecodeString("707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f")
 if err != nil {
@@ -130,6 +131,40 @@ if err != nil {
 	return err
 }
 err = pv3.Decrypt(token, symK).ScanClaims(&cc)
+
+// more info about implicit asserts is here
+// https://github.com/paseto-standard/paseto-spec/blob/master/docs/Rationale-V3-V4.md#implicit-assertions-feature
+
+```
+
+# Version 4 (local)
+Recommended
+```go
+k, err := hex.DecodeString("707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f")
+if err != nil {
+    return err 
+}
+symK := NewSymmetricKey(k, pvx.Version4)
+pv4 := NewPV4Local()
+token, err := pv4.Encrypt(symK, claims, pvx.WithAssert([]byte("test")))
+if err != nil {
+	return err
+}
+cc := MyClaims{}
+err = pv4.
+    Decrypt(token, symK, pvx.WithAssert([]byte("test"))).
+    ScanClaims(&cc)
+if err != nil {
+    return err 
+}
+// work with cc claims ...
+
+// or without assert
+token, err := pv4.Encrypt(symK, claims)
+if err != nil {
+	return err
+}
+err = pv4.Decrypt(token, symK).ScanClaims(&cc)
 
 // more info about implicit asserts is here
 // https://github.com/paseto-standard/paseto-spec/blob/master/docs/Rationale-V3-V4.md#implicit-assertions-feature
