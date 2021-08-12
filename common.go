@@ -12,7 +12,7 @@ type purpose string
 const (
 	purposeLocal purpose = "local"
 
-//	purposePublic purpose = "public"
+	purposePublic purpose = "public"
 )
 
 // Version denotes PASETO version which will be used.
@@ -35,9 +35,37 @@ type SymKey struct {
 	key
 }
 
+// AsymSecretKey is an asymmetric key abstraction for usage inside PASETO on sign.
+type AsymSecretKey struct {
+	key
+}
+
+// AsymPublicKey is an asymmetric key abstraction for usage inside PASETO on verify.
+type AsymPublicKey struct {
+	key
+}
+
+func (k *AsymPublicKey) isValidFor(v Version, p purpose) bool {
+	return k.version == v && p == purposePublic
+}
+
+// NewAsymmetricPublicKey is a constructor-like function for AsymPublicKey which is a wrapper for raw key material used inside PASETO.
+func NewAsymmetricPublicKey(keyMaterial []byte, version Version) *AsymPublicKey {
+	return &AsymPublicKey{key: key{keyMaterial: keyMaterial, version: version}}
+}
+
+// NewAsymmetricSecretKey is a constructor-like function for AsymSecretKey which is a wrapper for raw key material used inside PASETO.
+func NewAsymmetricSecretKey(keyMaterial []byte, version Version) *AsymSecretKey {
+	return &AsymSecretKey{key{keyMaterial: keyMaterial, version: version}}
+}
+
 // NewSymmetricKey is a constructor-like function for SymKey which is a wrapper for raw key material used inside PASETO
 func NewSymmetricKey(keyMaterial []byte, version Version) *SymKey {
 	return &SymKey{key: key{keyMaterial: keyMaterial, version: version}}
+}
+
+func (k *AsymSecretKey) isValidFor(v Version, p purpose) bool {
+	return k.version == v && p == purposePublic
 }
 
 func (k *SymKey) isValidFor(v Version, p purpose) bool {

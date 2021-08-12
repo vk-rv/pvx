@@ -4,9 +4,10 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"fmt"
+	"strings"
+
 	"golang.org/x/crypto/blake2b"
 	"golang.org/x/crypto/chacha20"
-	"strings"
 )
 
 const (

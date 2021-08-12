@@ -7,9 +7,10 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 	"fmt"
-	"golang.org/x/crypto/hkdf"
 	"io"
 	"strings"
+
+	"golang.org/x/crypto/hkdf"
 )
 
 const (
