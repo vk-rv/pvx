@@ -33,8 +33,8 @@ k, err := hex.DecodeString("707172737475767778797a7b7c7d7e7f80818283848586878889
 if err != nil {
     return err 
 }
-symK := NewSymmetricKey(k, pvx.Version4)
-pv4 := NewPV4Local()
+symK := pvx.NewSymmetricKey(k, pvx.Version4)
+pv4 := pvx.NewPV4Local()
 token, err := pv4.Encrypt(symK, claims, pvx.WithAssert([]byte("test")))
 if err != nil {
 	return err
@@ -67,10 +67,10 @@ Sign / Verify
 
 ```go
 publicKey, privateKey, _ := ed25519.GenerateKey(nil)
-sk := NewAsymmetricSecretKey(privateKey, pvx.Version4)
-pk := NewAsymmetricPublicKey(publicKey, pvx.Version4)
+sk := pvx.NewAsymmetricSecretKey(privateKey, pvx.Version4)
+pk := pvx.NewAsymmetricPublicKey(publicKey, pvx.Version4)
 
-pv4 := NewPV4Public()
+pv4 := pvx.NewPV4Public()
 
 token, err := pv4.Sign(sk, claims, pvx.WithAssert([]byte("test")))
 if err != nil {//...}
@@ -93,8 +93,8 @@ k, err := hex.DecodeString("707172737475767778797a7b7c7d7e7f80818283848586878889
 if err != nil {
     return err 
 }
-symK := NewSymmetricKey(k, pvx.Version3)
-pv3 := NewPV3Local()
+symK := pvx.NewSymmetricKey(k, pvx.Version3)
+pv3 := pvx.NewPV3Local()
 token, err := pv3.Encrypt(symK, claims, pvx.WithAssert([]byte("test")))
 if err != nil {
 	return err
